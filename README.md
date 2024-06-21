@@ -40,6 +40,9 @@ ZephyrCortex has the potential to revolutionize the way AI systems are developed
 
 ### PPROJECT STRUTURE
 
+
+```
+
 ZephyrCortex/
 ├── src/
 │   ├── analysis/
@@ -95,3 +98,6 @@ ZephyrCortex/
 ├── requirements.txt
 ├── README.md
 └── setup.py
+
+```
+
