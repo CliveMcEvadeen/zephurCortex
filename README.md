@@ -47,8 +47,7 @@ ZephyrCortex/
 ├── src/
 │   ├── analysis/
 │   │   ├── __init__.py
-│   │   ├── meta_api.py
-│   │   ├── gemini_api.py
+│   │   ├── llama_api.py
 │   │   ├── code_analysis_engine.py
 │   │   └── text_analyzer.py
 │   ├── refactoring/
@@ -66,8 +65,7 @@ ZephyrCortex/
 │   │   ├── gui.py
 │   ├── tests/
 │   │   ├── __init__.py
-│   │   ├── test_meta_api.py
-│   │   ├── test_gemini_api.py
+│   │   ├── test_llama_api.py
 │   │   ├── test_code_analysis_engine.py
 │   │   ├── test_refactoring_engine.py
 │   │   ├── test_self_modification_engine.py
