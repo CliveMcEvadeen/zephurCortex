@@ -56,9 +56,15 @@ ZephyrCortex/
 │   └── self_modification/
 │   │   ├── __init__.py
 │   │   ├── self_modification_engine.py
-│   ├── learning/
-│   │   ├── __init__.py
-│   │   ├── learning_module.py
+│   │   ├── learning/
+│   │   │    ├── __init__.py
+│   │   │    ├── learning_module.py
+│   │   │    ├── data_gathering.py
+│   │   │    ├── data_processing.py
+│   │   │    ├── knowledge_base.py
+│   │   │    ├── learning_algorithm.py
+│   │   │    ├── user_interface.py
+│   │   │    └── utils.py
 │   ├── ui/
 │   │   ├── __init__.py
 │   │   ├── cli.py
