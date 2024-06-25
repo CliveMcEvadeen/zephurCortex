@@ -349,7 +349,7 @@ if __name__ == "__main__":
         "https://example.com/page3"
     ]
 
-    sample_api_url = "https://jsonplaceholder.typicode.com/posts"
+    sample_api_url = "https://www.goodreads.com/shelf/show/free-download"
 
     sample_dynamic_url = "https://example.com/dynamic-page"
 
@@ -370,58 +370,58 @@ if __name__ == "__main__":
         print()
 
     # Example 3: Handle dynamic content
-    logger.info(f"Fetching dynamic content from {sample_dynamic_url}...")
-    dynamic_data = handle_dynamic_content(sample_dynamic_url)
-    if dynamic_data:
-        print("Dynamic Content:")
-        print(dynamic_data)
-        print()
+    # logger.info(f"Fetching dynamic content from {sample_dynamic_url}...")
+    # dynamic_data = handle_dynamic_content(sample_dynamic_url)
+    # if dynamic_data:
+    #     print("Dynamic Content:")
+    #     print(dynamic_data)
+    #     print()
 
     # Example 4: Extract text from PDF
-    sample_pdf_url = "https://example.com/sample.pdf"
-    logger.info(f"Extracting text from PDF: {sample_pdf_url}")
-    pdf_text = extract_pdf_text(sample_pdf_url)
-    if pdf_text:
-        print("Extracted PDF Text:")
-        print(pdf_text)
-        print()
+    # sample_pdf_url = "https://example.com/sample.pdf"
+    # logger.info(f"Extracting text from PDF: {sample_pdf_url}")
+    # pdf_text = extract_pdf_text(sample_pdf_url)
+    # if pdf_text:
+    #     print("Extracted PDF Text:")
+    #     print(pdf_text)
+    #     print()
 
     # Example 5: Download images
-    sample_image_urls = [
-        "https://example.com/image1.jpg",
-        "https://example.com/image2.png"
-    ]
-    save_directory = "./downloaded_images"
-    logger.info(f"Downloading images...")
-    saved_image_paths = download_images(sample_image_urls, save_directory)
-    if saved_image_paths:
-        print("Saved Image Paths:")
-        for path in saved_image_paths:
-            print(path)
-        print()
+    # sample_image_urls = [
+    #     "https://example.com/image1.jpg",
+    #     "https://example.com/image2.png"
+    # ]
+    # save_directory = "./downloaded_images"
+    # logger.info(f"Downloading images...")
+    # saved_image_paths = download_images(sample_image_urls, save_directory)
+    # if saved_image_paths:
+    #     print("Saved Image Paths:")
+    #     for path in saved_image_paths:
+    #         print(path)
+    #     print()
 
     # Example 6: Submit HTML form
-    sample_form_url = "https://example.com/submit-form"
-    sample_form_data = {'name': 'John Doe', 'email': 'john.doe@example.com'}
-    logger.info(f"Submitting HTML form: {sample_form_url}")
-    form_response = submit_html_form(sample_form_url, sample_form_data)
-    if form_response:
-        print("Form Submission Response:")
-        print(form_response.decode('utf-8'))
-        print()
+    # sample_form_url = "https://example.com/submit-form"
+    # sample_form_data = {'name': 'John Doe', 'email': 'john.doe@example.com'}
+    # logger.info(f"Submitting HTML form: {sample_form_url}")
+    # form_response = submit_html_form(sample_form_url, sample_form_data)
+    # if form_response:
+    #     print("Form Submission Response:")
+    #     print(form_response.decode('utf-8'))
+    #     print()
 
     # Example 7: Process media content
-    sample_media_urls = [
-        "https://example.com/sample.pdf",
-        "https://example.com/image1.jpg"
-    ]
-    media_save_directory = "./processed_media"
-    logger.info("Processing media content...")
-    processed_media_paths = process_media_content(sample_media_urls, media_save_directory)
-    if processed_media_paths:
-        print("Processed Media Paths:")
-        for media_type, paths in processed_media_paths.items():
-            print(f"{media_type.capitalize()}:")
-            for path in paths:
-                print(path)
-        print()
+    # sample_media_urls = [
+    #     "https://example.com/sample.pdf",
+    #     "https://example.com/image1.jpg"
+    # ]
+    # media_save_directory = "./processed_media"
+    # logger.info("Processing media content...")
+    # processed_media_paths = process_media_content(sample_media_urls, media_save_directory)
+    # if processed_media_paths:
+    #     print("Processed Media Paths:")
+    #     for media_type, paths in processed_media_paths.items():
+    #         print(f"{media_type.capitalize()}:")
+    #         for path in paths:
+    #             print(path)
+    #     print()
