@@ -1,27 +1,40 @@
 """
 data_gathering.py
 
-This module handles data gathering processes for the learning module.
-It includes functionalities for web scraping, API integration, dynamic content handling,
-PDF text extraction, image downloading, form submission, media content processing,
-error handling, and logging.
+This module is designed for automatic and comprehensive data gathering from various sources on the internet.
+It includes functionalities for web scraping, API integration, and accessing public datasets. The gathered 
+data is intended for use in the ZephyrCortex project to enable continuous learning and improvement.
 
 Features:
-1. Web scraping using requests and BeautifulSoup.
-2. API integration with external endpoints.
-3. Handling dynamic content with Selenium.
-4. PDF text extraction using PyPDF2.
-5. Downloading images from URLs.
-6. Submitting data to HTML forms.
-7. Processing media content (PDFs, images).
-8. Error handling and retry mechanisms for HTTP requests.
-9. Parallel processing for efficiency.
-10. Logging and monitoring of data gathering activities.
-11. Respecting robots.txt rules.
-12. Caching data for efficiency.
+- Web Scraping: Automatically extract data from web pages using BeautifulSoup and Selenium.
+- API Integration: Connect to various APIs to gather data (e.g., social media, news, scientific databases).
+- Public Datasets: Download and preprocess data from public datasets (e.g., Kaggle, UCI Machine Learning Repository).
+- Data Storage: Store gathered data in a local database for further processing.
+- Scheduling: Schedule regular data gathering tasks to keep the dataset updated.
+- Error Handling: Robust error handling and logging to manage failed data gathering attempts.
+- Proxy and Rate Limiting: Use proxies and manage rate limits to avoid blocking and ensure compliance with terms of service.
 
 Usage:
-- Import and utilize functions/methods defined here in the learning module.
+1. Configure the data sources and parameters.
+2. Run the data gathering functions to collect data from various sources.
+3. The gathered data is stored and can be accessed for further processing.
+
+Dependencies:
+- BeautifulSoup
+- Selenium
+- Requests
+- pandas
+- SQLAlchemy
+- APScheduler
+
+Example:
+    from data_gathering import DataGatherer
+
+    gatherer = DataGatherer()
+    gatherer.gather_web_data('https://example.com')
+    gatherer.gather_api_data('https://api.example.com/data')
+    gatherer.gather_public_data('kaggle', 'dataset-name')
+
 """
 
 import os
@@ -341,7 +354,7 @@ def process_media_content(media_urls, save_directory):
         logger.error(f"Error processing media content: {str(e)}")
     return saved_paths
 
-# Example usage
+# usage 1
 if __name__ == "__main__":
     sample_urls = [
         "https://example.com/page1",
