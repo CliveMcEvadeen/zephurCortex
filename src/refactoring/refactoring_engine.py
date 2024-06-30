@@ -1405,6 +1405,53 @@ class RefactoringEngine:
         test_results = json.loads(result.stdout)
         return test_results
 
+    def code_optimization(self, code: str) -> str:
+        """
+        Identifies and optimizes inefficient code segments.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be optimized.
+
+        Returns:
+        --------
+        optimized_code : str
+            The optimized source code.
+        """
+        tree = ast.parse(code)
+
+        class OptimizationVisitor(ast.NodeTransformer):
+            def visit_For(self, node):
+                self.generic_visit(node)
+                # Example optimization: Unroll small loops
+                if isinstance(node.iter, ast.Call) and node.iter.func.id == 'range':
+                    if len(node.iter.args) == 1 and isinstance(node.iter.args[0], ast.Constant):
+                        range_val = node.iter.args[0].value
+                        if range_val <= 5:  # Unroll loops with a small range
+                            new_body = []
+                            for i in range(range_val):
+                                for stmt in node.body:
+                                    new_stmt = ast.fix_missing_locations(ast.increment_lineno(ast.copy_location(stmt, stmt), i))
+                                    new_body.append(new_stmt)
+                            return new_body
+                return node
+
+            def visit_If(self, node):
+                self.generic_visit(node)
+                # Example optimization: Simplify constant conditions
+                if isinstance(node.test, ast.Constant):
+                    if node.test.value:
+                        return node.body
+                    else:
+                        return node.orelse
+                return node
+
+        optimized_tree = OptimizationVisitor().visit(tree)
+        optimized_code = ast.unparse(optimized_tree)
+        self.logger.info("Code optimization performed.")
+        return optimized_code
+
 
 # usage examples
 
