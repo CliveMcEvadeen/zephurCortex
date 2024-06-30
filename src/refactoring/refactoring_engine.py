@@ -1452,6 +1452,54 @@ class RefactoringEngine:
         self.logger.info("Code optimization performed.")
         return optimized_code
 
+    def code_minification(self, code: str) -> str:
+        """
+        Minifies the code for production environments by removing unnecessary whitespace and comments.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be minified.
+
+        Returns:
+        --------
+        minified_code : str
+            The minified source code.
+        """
+        class MinificationVisitor(ast.NodeTransformer):
+            def visit_Module(self, node):
+                self.generic_visit(node)
+                node.body = [stmt for stmt in node.body if not isinstance(stmt, ast.Expr) or not isinstance(stmt.value, ast.Str)]
+                return node
+
+        tree = ast.parse(code)
+        minified_tree = MinificationVisitor().visit(tree)
+        minified_code = ast.unparse(minified_tree)
+        minified_code = "\n".join(line.strip() for line in minified_code.split('\n') if line.strip())
+        self.logger.info("Code minification performed.")
+        return minified_code
+
+    def code_beautification(self, code: str) -> str:
+        """
+        Beautifies the code for better readability and adherence to standard formatting guidelines.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be beautified.
+
+        Returns:
+        --------
+        beautified_code : str
+            The beautified source code.
+        """
+        try:
+            beautified_code = autopep8.fix_code(code)
+            self.logger.info("Code beautification performed.")
+            return beautified_code
+        except Exception as e:
+            self.logger.error(f"Error during code beautification: {e}")
+            return code
 
 # usage examples
 
