@@ -58,6 +58,7 @@ Example:
 """
 
 import ast
+import json
 import random
 import string
 import autopep8
@@ -268,7 +269,7 @@ class RefactoringEngine:
         else:
             raise ValueError("The specified line does not contain a for loop.")
 
-    def detect_code_duplication(self, code: str) -> List[Tuple[int, int]]:
+    def code_duplication_detection(self, code: str) -> List[Tuple[int, int]]:
         """
         Detects duplicate code blocks.
 
@@ -310,11 +311,11 @@ class RefactoringEngine:
         with open('temp_code.py', 'w') as f:
             f.write(code)
         result = subprocess.run(['pylint', 'temp_code.py', '--output-format=json'], capture_output=True, text=True)
-        analysis = eval(result.stdout)
+        analysis = json.loads(result.stdout)
         self.logger.info("Static code analysis performed.")
         return analysis
 
-    def provide_refactoring_suggestions(self, code: str) -> List[str]:
+    def code_refactoring_suggestions(self, code: str) -> List[str]:
         """
         Provides suggestions for code improvement.
 
@@ -357,7 +358,7 @@ class RefactoringEngine:
             self.logger.error("Some tests failed.")
         return success
 
-    def manage_dependencies(self, dependencies: List[str]):
+    def dependency_management(self, dependencies: List[str]):
         """
         Manages and updates dependencies.
 
@@ -849,25 +850,30 @@ class RefactoringEngine:
             return complexity
 
     def generate_documentation(self, code: str) -> str:
-            """
-            Generates or updates documentation for the source code.
+        """
+        Generates or updates documentation for the source code.
 
-            Parameters:
-            -----------
-            code : str
-                The source code.
+        Parameters:
+        -----------
+        code : str
+            The source code.
 
-            Returns:
-            --------
-            documentation : str
-                Generated documentation.
-            """
+        Returns:
+        --------
+        documentation : str
+            Generated documentation.
+        """
+        try:
             errors = pydocstyle.check([code])
-            documentation = "\n".join([f"{error.explanation}" for error in errors])
+            documentation = "\n".join([str(error) for error in errors])
             self.logger.info("Documentation generated.")
             return documentation
+        except OSError as e:
+            self.logger.error(f"Error generating documentation: {e}")
+            return "Error: Documentation generation failed due to an OS-related issue."
 
-    def integrate_with_version_control(self, commit_message: str):
+
+    def version_control_integration(self, commit_message: str):
             """
             Integrates with version control systems to manage refactoring changes.
 
@@ -881,7 +887,7 @@ class RefactoringEngine:
             subprocess.run(['git', 'push'])
             self.logger.info("Changes committed and pushed to version control.")
 
-    def unroll_loops(self, code):
+    def loop_unrolling(self, code):
         """
         Optimize loops for better performance by unrolling them.
 
@@ -1112,7 +1118,7 @@ class RefactoringEngine:
             tree = ast.parse(code)
             extracted_code = self.extract_functions(tree)
             self.logger.info("Repeated code blocks extracted into functions.")
-        return astor.to_source(extracted_code)
+            return astor.to_source(extracted_code)
 
     def extract_functions(self, tree):
         
@@ -1154,7 +1160,250 @@ class RefactoringEngine:
         transformed_tree = extractor.visit(tree)
         return transformed_tree
 
+    def dead_code_elimination(self, code):
+        """
+        Eliminate dead code from the provided code.
 
+        This function identifies and removes code that is never executed or used, 
+        improving the overall readability and maintainability of the code.
+
+        Parameters:
+        code (str): The source code to be refactored.
+
+        Returns:
+        str: The refactored code with dead code removed.
+        """
+        if not code:
+            raise ValueError("Empty code provided.")
+        
+        tree = ast.parse(code)
+        
+        class DeadCodeEliminator(ast.NodeTransformer):
+            def __init__(self):
+                super().__init__()
+                self.used_names = set()
+
+            def visit_Name(self, node):
+                self.used_names.add(node.id)
+                return self.generic_visit(node)
+
+            def visit_FunctionDef(self, node):
+                if node.name not in self.used_names:
+                    return None
+                return self.generic_visit(node)
+
+            def visit_Assign(self, node):
+                if isinstance(node.targets[0], ast.Name) and node.targets[0].id not in self.used_names:
+                    return None
+                return self.generic_visit(node)
+
+        eliminator = DeadCodeEliminator()
+        eliminator.visit(tree)
+        cleaned_code = eliminator.visit(tree)
+        
+        return astor.to_source(cleaned_code)
+
+    def code_complexity_analysis(self, code):
+        """
+        Analyze and reduce the complexity of the provided code.
+
+        This function performs a detailed analysis of the code to identify areas with high complexity.
+        It provides suggestions for refactoring to improve readability and maintainability.
+
+        Parameters:
+        code (str): The source code to be analyzed.
+
+        Returns:
+        dict: A report containing complexity metrics and refactoring suggestions.
+        """
+        if not code:
+            raise ValueError("Empty code provided.")
+        
+        tree = ast.parse(code)
+        
+        class ComplexityAnalyzer(ast.NodeVisitor):
+            def __init__(self):
+                self.complexity_metrics = {
+                    'function_count': 0,
+                    'class_count': 0,
+                    'max_depth': 0,
+                    'average_depth': 0,
+                    'cyclomatic_complexity': 0
+                }
+                self.current_depth = 0
+                self.total_depth = 0
+                self.node_count = 0
+
+            def visit_FunctionDef(self, node):
+                self.complexity_metrics['function_count'] += 1
+                self.current_depth += 1
+                self.total_depth += self.current_depth
+                self.node_count += 1
+                self.generic_visit(node)
+                self.current_depth -= 1
+
+            def visit_ClassDef(self, node):
+                self.complexity_metrics['class_count'] += 1
+                self.current_depth += 1
+                self.total_depth += self.current_depth
+                self.node_count += 1
+                self.generic_visit(node)
+                self.current_depth -= 1
+
+            def visit_If(self, node):
+                self.complexity_metrics['cyclomatic_complexity'] += 1
+                self.generic_visit(node)
+
+            def visit_For(self, node):
+                self.complexity_metrics['cyclomatic_complexity'] += 1
+                self.generic_visit(node)
+
+            def visit_While(self, node):
+                self.complexity_metrics['cyclomatic_complexity'] += 1
+                self.generic_visit(node)
+
+            def visit_Try(self, node):
+                self.complexity_metrics['cyclomatic_complexity'] += 1
+                self.generic_visit(node)
+
+            def calculate_metrics(self):
+                if self.node_count > 0:
+                    self.complexity_metrics['average_depth'] = self.total_depth / self.node_count
+                self.complexity_metrics['max_depth'] = self.current_depth
+
+        analyzer = ComplexityAnalyzer()
+        analyzer.visit(tree)
+        analyzer.calculate_metrics()
+
+        return analyzer.complexity_metrics
+
+    def code_commenting(self, code):
+        """
+        Add comments to the provided code to improve readability and maintainability.
+
+        Parameters:
+        code (str): The source code to be commented.
+
+        Returns:
+        str: The commented source code.
+        """
+        import ast
+        import astor
+
+        class CommentingTransformer(ast.NodeTransformer):
+            def visit_FunctionDef(self, node):
+                # Add a comment before the function definition
+                comment = ast.Expr(value=ast.Str(s=f"Function {node.name}"))
+                node.body.insert(0, comment)
+                self.generic_visit(node)
+                return node
+
+            def visit_Assign(self, node):
+                # Add a comment before the assignment
+                targets = [astor.to_source(t).strip() for t in node.targets]
+                comment = ast.Expr(value=ast.Str(s=f"Assigning value to {', '.join(targets)}"))
+                return [comment, node]
+
+            def visit_Return(self, node):
+                # Add a comment before the return statement
+                comment = ast.Expr(value=ast.Str(s="Returning value"))
+                return [comment, node]
+
+        tree = ast.parse(code)
+        transformer = CommentingTransformer()
+        commented_tree = transformer.visit(tree)
+        commented_code = astor.to_source(commented_tree)
+
+        return commented_code
+
+
+    def function_inlining(self, code):
+        """
+        Inline small functions to reduce function call overhead.
+
+        Parameters:
+        code (str): The source code in which to inline functions.
+
+        Returns:
+        str: The source code with inlined functions.
+        """
+        import ast
+        import astor
+
+        class InliningTransformer(ast.NodeTransformer):
+            def __init__(self):
+                self.function_defs = {}
+
+            def visit_FunctionDef(self, node):
+                # Store the function definition for later inlining
+                self.function_defs[node.name] = node
+                return None  # Remove the function definition from the tree
+
+            def visit_Call(self, node):
+                # Inline the function call if the function is small
+                if isinstance(node.func, ast.Name) and node.func.id in self.function_defs:
+                    func_def = self.function_defs[node.func.id]
+                    if self.is_small_function(func_def):
+                        return self.inline_function_call(node, func_def)
+                return self.generic_visit(node)
+
+            def is_small_function(self, func_def):
+                # Determine if the function is small enough to be inlined
+                return len(func_def.body) <= 3  # Example threshold for small functions
+
+            def inline_function_call(self, call_node, func_def):
+                # Create a mapping of function arguments to call arguments
+                arg_map = {arg.arg: call_arg for arg, call_arg in zip(func_def.args.args, call_node.args)}
+                inlined_body = []
+                for stmt in func_def.body:
+                    inlined_stmt = self.replace_args(stmt, arg_map)
+                    inlined_body.append(inlined_stmt)
+                return inlined_body
+
+            def replace_args(self, node, arg_map):
+                # Replace function arguments with call arguments
+                if isinstance(node, ast.Name) and node.id in arg_map:
+                    return arg_map[node.id]
+                for field, value in ast.iter_fields(node):
+                    if isinstance(value, list):
+                        for i, item in enumerate(value):
+                            value[i] = self.replace_args(item, arg_map)
+                    elif isinstance(value, ast.AST):
+                        setattr(node, field, self.replace_args(value, arg_map))
+                return node
+
+        tree = ast.parse(code)
+        transformer = InliningTransformer()
+        inlined_tree = transformer.visit(tree)
+        inlined_code = astor.to_source(inlined_tree)
+
+        return inlined_code
+
+    def automated_testing(self, code: str) -> Dict[str, Any]:
+        """
+        Runs automated tests on the provided source code to ensure it passes all tests.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be tested.
+
+        Returns:
+        --------
+        test_results : Dict[str, Any]
+            The results of the automated tests.
+        """
+        with open('temp_code.py', 'w') as f:
+            f.write(code)
+        
+        result = subprocess.run(['pytest', 'temp_code.py', '--json-report'], capture_output=True, text=True)
+        if result.returncode != 0:
+            self.logger.error("Automated tests failed.")
+        else:
+            self.logger.info("Automated tests passed.")
+        
+        test_results = json.loads(result.stdout)
+        return test_results
 
 
 # usage examples
@@ -1162,293 +1411,160 @@ class RefactoringEngine:
 # Example usage for code_formatting
 
 refactoring_engine=RefactoringEngine()
-code_to_format = """
-def example_function():
-x=5
-if x==5:
-print('Hello')
+# Example usage for code_formatting
+code = """
+def example_function_1():
+    x = 1
+    y = 2
+    return x + y
+
+def example_function_2():
+    x = 4
+    y = 3
+    return x + y
 """
 
-formatted_code = refactoring_engine.code_formatting(code_to_format)
+# Format the code to adhere to standard formatting guidelines
+formatted_code = refactoring_engine.code_formatting(code)
 print("Formatted Code:\n", formatted_code)
 
 # Example usage for variable_renaming
-code_to_rename = """
-def old_function():
-    old_variable = 5
-    print(old_variable)
-"""
-
-renamed_code = refactoring_engine.variable_renaming(code_to_rename)
+# Rename variables for better clarity
+renamed_code = refactoring_engine.variable_renaming(code)
 print("Renamed Code:\n", renamed_code)
 
 # Example usage for function_extraction
-code_to_extract = """
-def repeated_function():
-    for i in range(5):
-    print(i)
-def another_function():
-    for j in range(3):
-    print(j)
-"""
-
-extracted_code = refactoring_engine.function_extraction(code_to_extract)
-print("Extracted Code:\n", extracted_code)
+# Extract repeated code blocks into functions
+extracted_functions_code = refactoring_engine.function_extraction(code)
+print("Extracted Functions Code:\n", extracted_functions_code)
 
 # Example usage for dead_code_elimination
-code_with_dead_code = """
-def unused_function():
-print("This function is never called")
+# Remove unused code
+clean_code = refactoring_engine.dead_code_elimination(code)
+print("Clean Code:\n", clean_code)
 
-x = 5
-"""
-
-cleaned_code = refactoring_engine.dead_code_elimination(code_with_dead_code)
-print("Cleaned Code:\n", cleaned_code)
-
-# Example usage for analyze_complexity
-code_to_analyze = """
-def example_function():
-for i in range(10):
-if i % 2 == 0:
-    print(i)
-for j in range(5):
-    print(j)
-"""
-
-complexity_scores = refactoring_engine.analyze_complexity(code_to_analyze)
-print("Complexity Scores:", complexity_scores)
+# Example usage for code_complexity_analysis
+# Analyze and reduce code complexity
+complexity_report = refactoring_engine.code_complexity_analysis(code)
+print("Complexity Report:\n", complexity_report)
 
 # Example usage for code_commenting
-code_to_comment = """
-def example_function():
-x = 5  # Initialize x
-if x == 5:
-print('Hello')  # Print statement
-"""
-
-commented_code = refactoring_engine.code_commenting(code_to_comment)
+# Add comments to improve code readability
+commented_code = refactoring_engine.code_commenting(code)
 print("Commented Code:\n", commented_code)
 
 # Example usage for function_inlining
-code_to_inline = """
-def small_function():
-return 5
-
-def main_function():
-result = small_function()
-print(result)
-"""
-
-inlined_code = refactoring_engine.function_inlining(code_to_inline)
+# Inline small functions to reduce function call overhead
+inlined_code = refactoring_engine.function_inlining(code)
 print("Inlined Code:\n", inlined_code)
 
-# Example usage for unroll_loops
-code_to_unroll = """
-for i in range(1, 10):
-    print(i)
-"""
-
-unrolled_code = refactoring_engine.unroll_loops(code_to_unroll)
+# Example usage for loop_unrolling
+# Optimize loops for better performance
+unrolled_code = refactoring_engine.loop_unrolling(code)
 print("Unrolled Code:\n", unrolled_code)
 
 # Example usage for code_duplication_detection
-code_with_duplicates = """
-def function_a():
-    for i in range(5):
-        print(i)
-
-def function_b():
-    for i in range(5):
-        print(i)
-"""
-
-deduplicated_code = refactoring_engine.code_duplication_detection(code_with_duplicates)
+# Detect and refactor duplicate code blocks
+deduplicated_code = refactoring_engine.code_duplication_detection(code)
 print("Deduplicated Code:\n", deduplicated_code)
 
 # Example usage for static_code_analysis
-code_to_analyze_static = """
-def example_function(x):
-if x > 0:
-print("Positive")
-else:
-print("Non-positive")
-"""
-
-analysis_results = refactoring_engine.static_code_analysis(code_to_analyze_static)
-print("Static Code Analysis Results:\n", analysis_results)
+# Perform static code analysis to identify potential issues
+static_analysis_report = refactoring_engine.static_code_analysis(code)
+print("Static Analysis Report:\n", static_analysis_report)
 
 # Example usage for code_refactoring_suggestions
-code_to_refactor = """
-def old_function():
-x = 5
-if x == 5:
-print("Five")
-"""
-
-refactoring_suggestions = refactoring_engine.code_refactoring_suggestions(code_to_refactor)
+# Provide suggestions for code improvement
+refactoring_suggestions = refactoring_engine.code_refactoring_suggestions(code)
 print("Refactoring Suggestions:\n", refactoring_suggestions)
 
 # Example usage for automated_testing
-code_to_test = """
-def example_function(x):
-return x * 2
-"""
-
-test_results = refactoring_engine.automated_testing(code_to_test)
-print("Automated Testing Results:\n", test_results)
+# Ensure refactored code passes all tests
+# test_results = refactoring_engine.automated_testing(code)
+# print("Test Results:\n", test_results)
 
 # Example usage for dependency_management
-dependencies_file = "requirements.txt"
-updated_dependencies = refactoring_engine.dependency_management(dependencies_file)
+# Manage and update dependencies
+updated_dependencies = refactoring_engine.dependency_management(code)
 print("Updated Dependencies:\n", updated_dependencies)
 
 # Example usage for documentation_generation
-code_to_document = """
-def example_function():
-\"\"\"This is an example function.\"\"\"
-pass
-"""
-
-documentation = refactoring_engine.documentation_generation(code_to_document)
+# Generate or update documentation
+documentation = refactoring_engine.generate_documentation(code)
 print("Documentation:\n", documentation)
 
-# Example usage for integrate_with_version_control
-refactoring_engine.integrate_with_version_control("Refactored code improvements")
+# Example usage for version_control_integration
+# Integrate with version control systems to manage refactoring changes
+version_control_status = refactoring_engine.version_control_integration(code)
+print("Version Control Status:\n", version_control_status)
 
 # Example usage for code_optimization
-code_to_optimize = """
-def example_function():
-result = 0
-for i in range(100):
-result += i
-return result
-"""
-
-optimized_code = refactoring_engine.code_optimization(code_to_optimize)
+# Identify and optimize inefficient code segments
+optimized_code = refactoring_engine.code_optimization(code)
 print("Optimized Code:\n", optimized_code)
 
 # Example usage for code_minification
-code_to_minify = """
-def example_function():
-x = 5
-if x == 5:
-print("Five")
-"""
-
-minified_code = refactoring_engine.code_minification(code_to_minify)
+# Minify the code for production environments
+minified_code = refactoring_engine.code_minification(code)
 print("Minified Code:\n", minified_code)
 
 # Example usage for code_beautification
-code_to_beautify = """
-def example_function():
-x=5
-if x==5:
-print('Hello')
-"""
-
-beautified_code = refactoring_engine.code_beautification(code_to_beautify)
+# Beautify code for better readability in development environments
+beautified_code = refactoring_engine.code_beautification(code)
 print("Beautified Code:\n", beautified_code)
 
 # Example usage for code_obfuscation
-code_to_obfuscate = """
-def example_function():
-secret_key = 'my_secret_key'
-"""
-
-obfuscated_code = refactoring_engine.code_obfuscation(code_to_obfuscate)
+# Obfuscate code to protect intellectual property
+obfuscated_code = refactoring_engine.code_obfuscation(code)
 print("Obfuscated Code:\n", obfuscated_code)
 
 # Example usage for logging_enhancements
-code_with_logging = """
-def example_function():
-x = 5
-print("Value of x:", x)
-"""
-
-enhanced_logging_code = refactoring_engine.logging_enhancements(code_with_logging)
+# Add or enhance logging in the code for better traceability
+enhanced_logging_code = refactoring_engine.logging_enhancements(code)
 print("Enhanced Logging Code:\n", enhanced_logging_code)
 
 # Example usage for error_handling_improvements
-code_with_error_handling = """
-def example_function(x):
-try:
-result = 10 / x
-except ZeroDivisionError:
-print("Error: Division by zero")
-"""
-
-improved_error_handling_code = refactoring_engine.error_handling_improvements(code_with_error_handling)
+# Add or improve error handling
+improved_error_handling_code = refactoring_engine.error_handling_improvements(code)
 print("Improved Error Handling Code:\n", improved_error_handling_code)
 
 # Example usage for security_analysis
-code_to_analyze_security = """
-def example_function(password):
-if password == "secure_password":
-print("Access granted")
-else:
-print("Access denied")
-"""
-
-security_analysis_results = refactoring_engine.security_analysis(code_to_analyze_security)
-print("Security Analysis Results:\n", security_analysis_results)
+# Perform a security analysis to identify potential vulnerabilities
+security_report = refactoring_engine.security_analysis(code)
+print("Security Report:\n", security_report)
 
 # Example usage for license_checker
-code_with_license_check = """
-# SPDX-License-Identifier: MIT
-def example_function():
-print("This code is licensed under MIT.")
-"""
-
-license_compliance = refactoring_engine.license_checker(code_with_license_check)
-print("License Compliance:\n", license_compliance)
+# Check for licenses and ensure compliance with open-source licenses
+license_compliance_report = refactoring_engine.license_checker(code)
+print("License Compliance Report:\n", license_compliance_report)
 
 # Example usage for integration_tests
-test_results = refactoring_engine.integration_tests()
-print("Integration Test Results:\n", test_results)
+# Run integration tests to ensure different parts of the application work together
+integration_test_results = refactoring_engine.integration_tests(code)
+print("Integration Test Results:\n", integration_test_results)
 
 # Example usage for code_metrics_calculation
-code_to_analyze_metrics = """
-def example_function():
-x = 5
-if x == 5:
-print("Five")
-"""
-
-metrics = refactoring_engine.code_metrics_calculation(code_to_analyze_metrics)
-print("Code Metrics:\n", metrics)
+# Calculate various code metrics (e.g., lines of code, number of functions)
+code_metrics = refactoring_engine.code_metrics_calculation(code)
+print("Code Metrics:\n", code_metrics)
 
 # Example usage for code_review_suggestions
-code_to_review = """
-def example_function():
-x = 5
-if x == 5:
-print("Five")
-"""
-
-review_suggestions = refactoring_engine.code_review_suggestions(code_to_review)
-print("Code Review Suggestions:\n", review_suggestions)
+# Provide suggestions based on best practices from code reviews
+review_suggestions = refactoring_engine.code_review_suggestions(code)
+print("Review Suggestions:\n", review_suggestions)
 
 # Example usage for configuration_file_refactoring
-config_file = "config.yaml"
-refactored_config = refactoring_engine.configuration_file_refactoring(config_file)
-print("Refactored Configuration File:\n", refactored_config)
+# Refactor configuration files for consistency and readability
+refactored_config = refactoring_engine.configuration_file_refactoring(code)
+print("Refactored Config:\n", refactored_config)
 
 # Example usage for internationalization_support
-code_to_internationalize = """
-def example_function():
-greeting = "Hello, World!"
-"""
-
-internationalized_code = refactoring_engine.internationalization_support(code_to_internationalize)
-print("Internationalized Code:\n", internationalized_code)
+# Add or improve support for internationalization
+i18n_code = refactoring_engine.internationalization_support(code)
+print("Internationalization Code:\n", i18n_code)
 
 # Example usage for profiling
-code_to_profile = """
-def example_function():
-    for i in range(1000000):
-    pass
-"""
+# Profile code to identify performance bottlenecks
+profiling_report = refactoring_engine.profiling(code)
+print("Profiling Report:\n", profiling_report)
 
-profile_results = refactoring_engine.profiling(code_to_profile)
-print("Profiling Results:\n", profile_results)
