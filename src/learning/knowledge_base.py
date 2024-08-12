@@ -42,9 +42,7 @@ import numpy as np
 import faiss
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sqlalchemy import create_engine, Column, String, LargeBinary, Integer
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-import pandas as pd
+from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 from tqdm import tqdm
 import nltk
@@ -59,9 +57,9 @@ Base = declarative_base()
 class KnowledgeEntry(Base):
     __tablename__ = 'knowledge_entries'
     id = Column(Integer, primary_key=True)
-    text = Column(String)
+    text = Column(String, unique=True)  # Ensure text is unique
     vector = Column(LargeBinary)
-    metadata = Column(String)
+    custom_metadata = Column(String)
 
 class KnowledgeBase:
     def __init__(self, db_path='sqlite:///knowledge_base.db'):
@@ -88,10 +86,16 @@ class KnowledgeBase:
 
     def store_knowledge(self, text, metadata=None):
         session = self.Session()
+
+        # Check if the vectorizer is fitted, if not, fit it with initial data
+        if not hasattr(self.vectorizer, 'vocabulary_'):
+            self.vectorizer.fit(["sample text to fit vectorizer"])  # Fit with initial data if available
+
         vector = self.vectorizer.transform([text]).toarray().astype(np.float32)
-        entry = KnowledgeEntry(text=text, vector=vector.tobytes(), metadata=metadata)
+        entry = KnowledgeEntry(text=text, vector=vector.tobytes(), custom_metadata=metadata)
         session.add(entry)
         session.commit()
+
         if self.index is None:
             self.index = faiss.IndexFlatL2(vector.shape[1])
         self.index.add(vector)
@@ -102,9 +106,17 @@ class KnowledgeBase:
         distances, indices = self.index.search(vector, top_k)
         session = self.Session()
         results = []
+
         for idx in indices[0]:
-            entry = session.query(KnowledgeEntry).get(idx + 1)
-            results.append(entry.text)
+            if 0 <= idx < len(session.query(KnowledgeEntry).all()):  # Check index validity
+                entry = session.get(KnowledgeEntry, idx + 1)
+                if entry:
+                    results.append(entry.text)
+                else:
+                    print(f"No entry found for index {idx + 1}")
+            else:
+                print(f"Index {idx} is out of bounds.")
+        
         session.close()
         return results
 
@@ -116,7 +128,7 @@ class KnowledgeBase:
             entry.text = new_text
             entry.vector = vector.tobytes()
             if new_metadata:
-                entry.metadata = new_metadata
+                entry.custom_metadata = new_metadata
             session.commit()
         session.close()
         self._rebuild_index()
@@ -165,7 +177,9 @@ class KnowledgeBase:
     def add_bulk_knowledge(self, texts):
         session = self.Session()
         normalized_texts = [self.normalize_data(text) for text in texts]
-        vectors = self.vectorizer.fit_transform(normalized_texts).toarray().astype(np.float32)
+        if not hasattr(self.vectorizer, 'vocabulary_'):
+            self.vectorizer.fit(normalized_texts)
+        vectors = self.vectorizer.transform(normalized_texts).toarray().astype(np.float32)
         entries = [KnowledgeEntry(text=text, vector=vector.tobytes()) for text, vector in zip(normalized_texts, vectors)]
         session.bulk_save_objects(entries)
         session.commit()

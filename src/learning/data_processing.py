@@ -46,7 +46,11 @@ class DataProcessor:
         logging.info("Cleaning data...")
         df = df.drop_duplicates()
         df = df.dropna()  # Handling missing values can be more sophisticated
-        df = df[(np.abs(df - df.mean()) <= (3*df.std())).all(axis=1)]  # Removing outliers
+        
+        # Select only numeric columns for outlier removal
+        df_numeric = df.select_dtypes(include=[np.number])
+        df = df[(np.abs(df_numeric - df_numeric.mean()) <= (3 * df_numeric.std())).all(axis=1)]
+        
         return df
 
     def normalize_data(self, df: pd.DataFrame, columns: list, method: str = 'standard') -> pd.DataFrame:
@@ -72,13 +76,13 @@ class DataProcessor:
     def encode_categorical_data(self, df: pd.DataFrame, columns: list) -> pd.DataFrame:
         """
         Apply One-Hot Encoding to categorical columns.
-        
+
         :param df: Input dataframe
         :param columns: List of columns to encode
         :return: Dataframe with encoded columns
         """
         logging.info("Encoding categorical data...")
-        self.encoder = OneHotEncoder(sparse=False)
+        self.encoder = OneHotEncoder(sparse_output=False)  # Updated parameter name
         encoded_cols = self.encoder.fit_transform(df[columns])
         encoded_df = pd.DataFrame(encoded_cols, columns=self.encoder.get_feature_names_out(columns))
         return pd.concat([df.drop(columns, axis=1).reset_index(drop=True), encoded_df.reset_index(drop=True)], axis=1)
@@ -129,8 +133,15 @@ class DataProcessor:
         :return: Dataframe with t-SNE components
         """
         logging.info("Applying t-SNE...")
+        
+        n_samples = df.shape[0]
+        if perplexity >= n_samples:
+            perplexity = max(2, n_samples - 1)  # Adjust perplexity to be less than n_samples but not below 2
+            logging.warning(f"Perplexity was too high. Adjusted to {perplexity}.")
+
         self.tsne = TSNE(n_components=n_components, perplexity=perplexity)
         tsne_components = self.tsne.fit_transform(df)
+        
         tsne_df = pd.DataFrame(tsne_components, columns=[f't-SNE{i+1}' for i in range(n_components)])
         return pd.concat([df.reset_index(drop=True), tsne_df.reset_index(drop=True)], axis=1)
 

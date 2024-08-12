@@ -6,8 +6,8 @@ to improve and refactor code for better readability, maintainability, and perfor
 
 Features:
 - Code Formatting: Ensure code adheres to standard formatting guidelines.
-- Variable Renaming: Suggest or rename variables for better clarity.
-- Function Extraction: Identify and extract repeated code blocks into functions.
+- Variable Renaming: Suggest or rename variables for better clarity.....under inspection
+- Function Extraction: Identify and extract repeated code blocks into functions........done in the main zephurion engine
 - Dead Code Elimination: Identify and remove unused code.
 - Code Complexity Analysis: Analyze and reduce code complexity.
 - Code Commenting: Add comments to improve code readability.
@@ -49,6 +49,7 @@ Dependencies:
 - pydocstyle
 - requests
 
+
 Example:
     from refactoring_engine import refactoring_engine
 
@@ -58,7 +59,11 @@ Example:
 """
 
 import ast
+import cProfile
+import io
 import json
+import os
+import pstats
 import random
 import string
 import autopep8
@@ -67,13 +72,14 @@ import flake8.api.legacy as flake8
 import logging
 import re
 import subprocess
-import pyminifier
+import pyminifier               
 import astor
-# import babel
 from typing import List, Tuple, Dict, Any
 import pydocstyle
-
 import requests
+import yaml
+
+
 class RefactoringEngine:
 
     def __init__(self):
@@ -315,7 +321,7 @@ class RefactoringEngine:
         self.logger.info("Static code analysis performed.")
         return analysis
 
-    def code_refactoring_suggestions(self, code: str) -> List[str]:
+    def code_review_suggestions(self, code: str) -> List[str]:
         """
         Provides suggestions for code improvement.
 
@@ -369,20 +375,25 @@ class RefactoringEngine:
         """
         for dependency in dependencies:
             response = requests.get(f'https://pypi.org/pypi/{dependency}/json')
-            if response.status_code == 200:
-                latest_version = response.json()['info']['version']
-                # Assuming we have a requirements.txt file
-                with open('requirements.txt', 'r') as f:
-                    lines = f.readlines()
-                with open('requirements.txt', 'w') as f:
-                    for line in lines:
-                        if line.startswith(dependency):
-                            f.write(f"{dependency}=={latest_version}\n")
-                        else:
-                            f.write(line)
+            requirements_file='requirements_test_file.txt'
+            if not os.path.isfile(requirements_file):
+                with open(requirements_file, 'w') as file:
+                    pass
+            else:
+                if response.status_code == 200:
+                    latest_version = response.json()['info']['version']
+                    # Assuming we have a requirements.txt file
+                    with open(requirements_file, 'r') as f:
+                        lines = f.readlines()
+                    with open(requirements_file, 'w') as f:
+                        for line in lines:
+                            if line.startswith(dependency):
+                                f.write(f"{dependency}=={latest_version}\n")
+                            else:
+                                f.write(line)
         self.logger.info("Dependencies managed and updated.")
 
-    def enhance_logging(self, code: str) -> str:
+    def logging_enhancements(self, code: str) -> str:
         """
         Adds detailed logging to the code.
 
@@ -409,7 +420,7 @@ class RefactoringEngine:
         self.logger.info("Logging enhanced.")
         return enhanced_code
 
-    def improve_error_handling(self, code: str) -> str:
+    def error_handling_improvements(self, code: str) -> str:
         """
         Adds error handling to the code.
 
@@ -443,26 +454,37 @@ class RefactoringEngine:
         self.logger.info("Error handling improved.")
         return enhanced_code
 
-    def perform_security_analysis(self, code: str) -> Dict[str, Any]:
+    def security_analysis(self, code: str) -> dict:
         """
-        Performs security analysis on the code.
+        Perform a security analysis to identify potential vulnerabilities.
 
         Parameters:
         -----------
         code : str
-            The source code.
+            The source code to be analyzed.
 
         Returns:
         --------
-        analysis : Dict[str, Any]
-            Security analysis report.
+        dict: Security analysis report.
         """
-        with open('temp_code.py', 'w') as f:
-            f.write(code)
-        result = subprocess.run(['bandit', '-f', 'json', 'temp_code.py'], capture_output=True, text=True)
-        analysis = eval(result.stdout)
-        self.logger.info("Security analysis performed.")
-        return analysis
+        try:
+            with open('temp_code.py', 'w') as f:
+                f.write(code)
+
+            result = subprocess.run(['bandit', 'temp_code.py', '--format=json'], capture_output=True, text=True)
+            if result.returncode != 0:
+                self.logger.error(f"Error during security analysis: {result.stderr}")
+                return {"error": result.stderr}
+
+            analysis = result.stdout
+            self.logger.info("Security analysis completed.")
+            return json.loads(analysis)
+        except FileNotFoundError as e:
+            self.logger.error(f"Security analysis tool not found: {e}")
+            return {"error": str(e)}
+        except Exception as e:
+            self.logger.error(f"Error during security analysis: {e}")
+            return {"error": str(e)}
 
     def check_license_compliance(self, code: str) -> bool:
         """
@@ -534,48 +556,71 @@ class RefactoringEngine:
         self.logger.info("Code review improvement suggestions provided.")
         return suggestions
 
-    def refactor_configuration_files(self, config_path: str) -> None:
+    def refactor_configuration_files(self, code: str, format: str = 'yaml') -> str:
         """
-        Refactors configuration files to adhere to best practices.
-
-        Parameters:
-        -----------
-        config_path : str
-            The path to the configuration files.
-
-        Returns:
-        --------
-        None
-        """
-        with open(config_path, 'r') as f:
-            config_content = f.read()
-        # Example refactor: Convert tabs to spaces
-        refactored_content = config_content.replace('\t', '    ')
-        with open(config_path, 'w') as f:
-            f.write(refactored_content)
-        self.logger.info("Configuration files refactored.")
-
-    def support_internationalization(self, code: str) -> str:
-        """
-        Adds support for internationalization to the code.
+        Refactor configuration files for consistency and readability.
 
         Parameters:
         -----------
         code : str
-            The source code.
+            The source code containing configuration data.
+        format : str
+            The format of the configuration ('yaml' or 'json').
 
         Returns:
         --------
-        i18n_code : str
-            The source code with internationalization support added.
+        refactored_config : str
+            The refactored configuration.
         """
+        if format not in ['yaml', 'json']:
+            raise ValueError("Unsupported format. Use 'yaml' or 'json'.")
+
+        try:
+            if format == 'yaml':
+                config_data = yaml.safe_load(code)
+                refactored_config = yaml.dump(config_data, sort_keys=False, default_flow_style=False)
+            elif format == 'json':
+                config_data = json.loads(code)
+                refactored_config = json.dumps(config_data, indent=4)
+            
+            self.logger.info("Configuration file refactored.")
+            return refactored_config
+
+        except (yaml.YAMLError, json.JSONDecodeError) as e:
+            self.logger.error(f"Error parsing configuration: {e}")
+            return f"Error parsing configuration: {e}"
+
+    def internationalization_support(self, code: str, target_language: str) -> str:
+        """
+        Add or improve support for internationalization.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be refactored.
+        target_language : str
+            The target language code for internationalization (e.g., 'en', 'es').
+
+        Returns:
+        --------
+        str: The refactored code with internationalization support.
+        """
+        # Example: wrap strings with gettext
         tree = ast.parse(code)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Str):
-                node.s = f"gettext('{node.s}')"
-        i18n_code = self.format_code(ast.unparse(tree))
-        self.logger.info("Internationalization support added.")
-        return i18n_code
+        
+        class I18nVisitor(ast.NodeTransformer):
+            def visit_Str(self, node):
+                return ast.Call(
+                    func=ast.Name(id='_', ctx=ast.Load()),
+                    args=[node],
+                    keywords=[]
+                )
+        
+        i18n_tree = I18nVisitor().visit(tree)
+        refactored_code = ast.unparse(i18n_tree)
+        
+        self.logger.info(f"Internationalization support added for target language: {target_language}")
+        return refactored_code
 
     def profile_code(self, code: str) -> Dict[str, Any]:
         """
@@ -1379,9 +1424,9 @@ class RefactoringEngine:
 
         return inlined_code
 
-    def automated_testing(self, code: str) -> Dict[str, Any]:
+    def automated_testing(self, code: str) -> str:
         """
-        Runs automated tests on the provided source code to ensure it passes all tests.
+        Runs automated tests on the provided code.
 
         Parameters:
         -----------
@@ -1390,20 +1435,47 @@ class RefactoringEngine:
 
         Returns:
         --------
-        test_results : Dict[str, Any]
-            The results of the automated tests.
+        test_results : str
+            Results of the automated tests.
         """
-        with open('temp_code.py', 'w') as f:
+        # Write the code to a temporary file for testing
+        temp_file = "temp_code.py"
+        with open(temp_file, "w") as f:
             f.write(code)
-        
-        result = subprocess.run(['pytest', 'temp_code.py', '--json-report'], capture_output=True, text=True)
-        if result.returncode != 0:
-            self.logger.error("Automated tests failed.")
-        else:
-            self.logger.info("Automated tests passed.")
-        
-        test_results = json.loads(result.stdout)
-        return test_results
+
+        try:
+            # Run the tests using a test framework (e.g., pytest) and capture the output
+            result = subprocess.run(['pytest', '--json-report', '--json-report-file=report.json'],
+                                    capture_output=True, text=True)
+
+            # Check if the result stdout is empty
+            if not result.stdout:
+                self.logger.error("No output from the test command.")
+                return "Error: No output from the test command."
+
+            # Load the JSON test results
+            with open("report.json", "r") as report_file:
+                test_results = json.load(report_file)
+
+            self.logger.info("Automated testing completed.")
+            return json.dumps(test_results, indent=4)
+
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Test command failed: {e}")
+            return f"Error: Test command failed with message: {e}"
+
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to decode JSON output: {e}")
+            return f"Error: Failed to decode JSON output: {e}"
+
+        finally:
+            # Clean up the temporary file
+            import os
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            if os.path.exists("report.json"):
+                os.remove("report.json")
+
 
     def code_optimization(self, code: str) -> str:
         """
@@ -1501,6 +1573,159 @@ class RefactoringEngine:
             self.logger.error(f"Error during code beautification: {e}")
             return code
 
+    def code_obfuscation(self, code: str) -> str:
+        """
+        Obfuscates the code to protect intellectual property by renaming variables and functions to random strings.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be obfuscated.
+
+        Returns:
+        --------
+        obfuscated_code : str
+            The obfuscated source code.
+        """
+        class ObfuscationVisitor(ast.NodeTransformer):
+            def __init__(self):
+                self.name_map = {}
+
+            def _get_random_name(self, length=8):
+                return ''.join(random.choices(string.ascii_letters, k=length))
+
+            def visit_FunctionDef(self, node):
+                new_name = self._get_random_name()
+                self.name_map[node.name] = new_name
+                node.name = new_name
+                self.generic_visit(node)
+                return node
+
+            def visit_Name(self, node):
+                if isinstance(node.ctx, ast.Store) and node.id not in self.name_map:
+                    new_name = self._get_random_name()
+                    self.name_map[node.id] = new_name
+                    node.id = new_name
+                elif isinstance(node.ctx, ast.Load) and node.id in self.name_map:
+                    node.id = self.name_map[node.id]
+                return node
+
+        tree = ast.parse(code)
+        obfuscator = ObfuscationVisitor()
+        obfuscated_tree = obfuscator.visit(tree)
+        obfuscated_code = ast.unparse(obfuscated_tree)
+        self.logger.info("Code obfuscation performed.")
+        return obfuscated_code
+
+        
+    def security_analysis(self, code: str) -> Dict[str, Any]:
+        """
+        Performs a security analysis to identify potential vulnerabilities in the code.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be analyzed.
+
+        Returns:
+        --------
+        analysis_report : Dict[str, Any]
+            A report containing details of potential security vulnerabilities.
+        """
+        try:
+            with open('temp_code.py', 'w') as f:
+                f.write(code)
+            result = subprocess.run(['bandit', '-r', 'temp_code.py', '-f', 'json'], capture_output=True, text=True)
+            analysis_report = json.loads(result.stdout)
+            self.logger.info("Security analysis performed.")
+            return analysis_report
+        except Exception as e:
+            self.logger.error(f"Error during security analysis: {e}")
+            return {"error": str(e)}
+
+    def profiling(self, code: str) -> Dict[str, Any]:
+        """
+        Profiles the code to identify performance bottlenecks.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be profiled.
+
+        Returns:
+        --------
+        profile_report : Dict[str, Any]
+            A report containing details of the profiling results.
+        """
+        # Create a temporary file to store the code
+        with open('temp_code.py', 'w') as f:
+            f.write(code)
+
+        # Profile the code
+        profiler = cProfile.Profile()
+        profiler.enable()
+        try:
+            exec(code, globals())
+        except Exception as e:
+            self.logger.error(f"Error during profiling: {e}")
+            return {"error": str(e)}
+        profiler.disable()
+
+        # Create a string stream to capture the profiling results
+        s = io.StringIO()
+        ps = pstats.Stats(profiler, stream=s).sort_stats(pstats.SortKey.CUMULATIVE)
+        ps.print_stats()
+
+        # Parse the profiling results
+        profile_report = s.getvalue()
+        self.logger.info("Code profiling performed.")
+        return {"profile_report": profile_report}
+
+    def internationalization_support(self, code: str, target_language: str) -> str:
+        """
+        Adds or improves support for internationalization by translating string literals in the code.
+
+        Parameters:
+        -----------
+        code : str
+            The source code to be internationalized.
+        target_language : str
+            The target language for translation (e.g., 'es' for Spanish, 'fr' for French).
+
+        Returns:
+        --------
+        internationalized_code : str
+            The source code with string literals translated to the target language.
+        """
+        try:
+            # Extract string literals from the code
+            tree = ast.parse(code)
+            string_literals = [node.s for node in ast.walk(tree) if isinstance(node, ast.Str)]
+
+            # Translate string literals
+            translated_literals = {}
+            for literal in string_literals:
+                response = requests.post(
+                    'https://api.mymemory.translated.net/get',
+                    params={'q': literal, 'langpair': f'en|{target_language}'}
+                )
+                translation = response.json().get('responseData', {}).get('translatedText', literal)
+                translated_literals[literal] = translation
+
+            # Replace string literals in the code
+            class InternationalizationVisitor(ast.NodeTransformer):
+                def visit_Str(self, node):
+                    return ast.copy_location(ast.Str(s=translated_literals.get(node.s, node.s)), node)
+
+            internationalized_tree = InternationalizationVisitor().visit(tree)
+            internationalized_code = ast.unparse(internationalized_tree)
+            self.logger.info("Internationalization support added.")
+            return internationalized_code
+        except Exception as e:
+            self.logger.error(f"Error during internationalization: {e}")
+            return code
+
+
 # usage examples
 
 # Example usage for code_formatting
@@ -1570,7 +1795,7 @@ print("Static Analysis Report:\n", static_analysis_report)
 
 # Example usage for code_refactoring_suggestions
 # Provide suggestions for code improvement
-refactoring_suggestions = refactoring_engine.code_refactoring_suggestions(code)
+refactoring_suggestions = refactoring_engine.code_review_suggestions(code)
 print("Refactoring Suggestions:\n", refactoring_suggestions)
 
 # Example usage for automated_testing
@@ -1589,9 +1814,9 @@ documentation = refactoring_engine.generate_documentation(code)
 print("Documentation:\n", documentation)
 
 # Example usage for version_control_integration
-# Integrate with version control systems to manage refactoring changes
-version_control_status = refactoring_engine.version_control_integration(code)
-print("Version Control Status:\n", version_control_status)
+# # Integrate with version control systems to manage refactoring changes
+# version_control_status = refactoring_engine.version_control_integration(code)
+# print("Version Control Status:\n", version_control_status)
 
 # Example usage for code_optimization
 # Identify and optimize inefficient code segments
@@ -1630,17 +1855,17 @@ print("Security Report:\n", security_report)
 
 # Example usage for license_checker
 # Check for licenses and ensure compliance with open-source licenses
-license_compliance_report = refactoring_engine.license_checker(code)
-print("License Compliance Report:\n", license_compliance_report)
+# license_compliance_report = refactoring_engine.license_checker(code)
+# print("License Compliance Report:\n", license_compliance_report)
 
 # Example usage for integration_tests
 # Run integration tests to ensure different parts of the application work together
-integration_test_results = refactoring_engine.integration_tests(code)
+integration_test_results = refactoring_engine.automated_testing(code)
 print("Integration Test Results:\n", integration_test_results)
 
 # Example usage for code_metrics_calculation
 # Calculate various code metrics (e.g., lines of code, number of functions)
-code_metrics = refactoring_engine.code_metrics_calculation(code)
+code_metrics = refactoring_engine.calculate_code_metrics(code)
 print("Code Metrics:\n", code_metrics)
 
 # Example usage for code_review_suggestions
@@ -1650,12 +1875,12 @@ print("Review Suggestions:\n", review_suggestions)
 
 # Example usage for configuration_file_refactoring
 # Refactor configuration files for consistency and readability
-refactored_config = refactoring_engine.configuration_file_refactoring(code)
+refactored_config = refactoring_engine.refactor_configuration_files(code)
 print("Refactored Config:\n", refactored_config)
 
 # Example usage for internationalization_support
 # Add or improve support for internationalization
-i18n_code = refactoring_engine.internationalization_support(code)
+i18n_code = refactoring_engine.internationalization_support(code, target_language='en')
 print("Internationalization Code:\n", i18n_code)
 
 # Example usage for profiling

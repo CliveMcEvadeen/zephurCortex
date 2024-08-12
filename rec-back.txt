@@ -22,9 +22,7 @@ cloudpathlib
 cloudpickle
 colorama
 confection
-contourpy
 crashtest
-cycler
 cymem
 Deprecated
 dill
@@ -34,7 +32,6 @@ dulwich
 fastjsonschema
 filelock
 flake8
-fonttools
 fsspec
 gitdb
 GitPython
@@ -44,7 +41,6 @@ httpcore
 httpx
 huggingface-hub
 idna
-iniconfig
 installer
 isort
 jaraco.classes
@@ -61,7 +57,6 @@ mando
 marisa-trie
 markdown-it-py
 MarkupSafe
-matplotlib
 mccabe
 mdurl
 more-itertools
@@ -70,7 +65,6 @@ msgpack
 multidict
 murmurhash
 mypy-extensions
-networkx
 nltk
 numba
 numpy
@@ -79,15 +73,12 @@ packaging
 pandas
 pathspec
 pexpect
-pillow
 pkginfo
 platformdirs
-pluggy
 poetry
 poetry-core
 poetry-plugin-export
 preshed
-psutil
 ptyprocess
 pycodestyle
 pycountry
@@ -99,11 +90,9 @@ pyflakes
 Pygments
 pylint
 pyminifier3
-pyparsing
 PyPDF2
 pyproject_hooks
 PySocks
-pytest
 python-dateutil
 pytoolconfig
 pytz
@@ -142,7 +131,6 @@ sympy
 thinc
 threadpoolctl
 tomlkit
-torch
 tqdm
 trio
 trio-websocket

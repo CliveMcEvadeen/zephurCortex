@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import optuna
+# import optuna
 import shap
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV

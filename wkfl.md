@@ -1,0 +1,59 @@
+
+src structure
+
+```
+└── 📁src
+    └── 📁agent_report
+        └── agent_analytics.py
+        └── agent_report.py
+    └── 📁analysis
+        └── 📁__pycache__
+            └── __init__.cpython-312.pyc
+            └── code_analysis_engine.cpython-312.pyc
+        └── __init__.py
+        └── code_analysis_engine.py
+        └── dependency_analyser.py
+        └── gemini.py
+        └── meta.py
+        └── metrics_calculator.py
+        └── security_analyser.py
+        └── text_analyser.py
+    └── 📁chat_engine
+        └── meta.py
+    └── 📁learning
+        └── __init__.py
+        └── data_gathering.py
+        └── data_processing.py
+        └── knowledge_base.py
+        └── learning_algolithm.py
+        └── user_interface.py
+        └── utils.py
+    └── 📁memories
+        └── memory_manager.py
+        └── vector_db.py
+    └── 📁refactoring
+        └── 📁__pycache__
+            └── __init__.cpython-312.pyc
+            └── refactoring_engine.cpython-312.pyc
+        └── __init__.py
+        └── refactoring_engine.py
+    └── 📁self_modification
+        └── __init__.py
+        └── self_modification_engine.py
+    └── 📁tests
+        └── test_code_analysis.py
+        └── test_code_refactoring.py
+        └── test_gemini.py
+        └── test_learning.py
+        └── test_meta.py
+        └── test_self_modification.py
+        └── test_text_analyser.py
+    └── 📁ui
+        └── __init__.py
+        └── cli.py
+        └── gui.py
+    └── 📁utils
+        └── __init__.py
+        └── config.py
+    ├── web
+```
